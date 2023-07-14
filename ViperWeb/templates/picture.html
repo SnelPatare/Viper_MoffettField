@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Captured Picture</title>
+</head>
+<body>
+    <h1>Captured Picture</h1>
+    <img src="{{ image_path }}" alt="Captured Picture" width="640" height="480">
+
+    <br>
+
+    <form action="/save_picture" method="post">
+        <input type="hidden" name="image_path" value="{{ image_path }}">
+        <input type="submit" value="Save Picture">
+    </form>
+</body>
+</html>

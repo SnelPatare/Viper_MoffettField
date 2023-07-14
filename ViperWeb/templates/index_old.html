@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+        }
+
+        .form-group input[type="submit"] {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .camera-container {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .camera-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .picture-container {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .picture-container img {
+            max-width: 100%;
+            max-height: 400px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .picture-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .success-message {
+            text-align: center;
+            color: #4CAF50;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Contact Form</h1>
+        <form action="/" method="post" id="contact-form" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone_number">Phone Number:</label>
+                <input type="text" id="phone_number" name="phone_number" required>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Submit">
+            </div>
+        </form>
+
+        <div class="camera-container">
+            <button id="start-camera">Start Camera</button>
+        </div>
+
+        <div class="picture-container">
+            <img id="captured-picture" src="#" alt="Captured Picture">
+            <button id="capture-picture" disabled>Capture Picture</button>
+            <button id="save-picture" disabled>Save Picture</button>
+        </div>
+
+        <p class="success-message" id="success-message"></p>
+    </div>
+
+    <script>
+// Access the camera
+const startCameraBtn = document.getElementById('start-camera');
+const capturePictureBtn = document.getElementById('capture-picture');
+const savePictureBtn = document.getElementById('save-picture');
+ const videoContainer = document.getElementById('video-container');
+        
+const capturedPicture = document.getElementById('captured-picture');
+const successMessage = document.getElementById('success-message');
+const contactForm = document.getElementById('contact-form');
+// Access the phone number input element
+const phoneNumberInput = document.getElementById('phone_number');
+
+let videoStream = null;
+let mediaRecorder = null;
+let chunks = [];
+let isFormValid = false;
+let isPictureTaken = false;
+
+startCameraBtn.addEventListener('click', async () => {
+    try {
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+        const videoElement = document.createElement('video');
+        videoElement.srcObject = videoStream;
+        videoElement.play();
+
+        document.body.appendChild(videoElement);
+
+        capturePictureBtn.disabled = false;
+        startCameraBtn.disabled = true;
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+    }
+});
+
+// Add event listener for input event
+phoneNumberInput.addEventListener('input', (event) => {
+    const inputValue = event.target.value;
+    event.target.value = inputValue.replace(/\D/g, '');
+});
+		
+capturePictureBtn.addEventListener('click', () => {
+    const canvasElement = document.createElement('canvas');
+    const videoElement = document.querySelector('video');
+
+    canvasElement.width = videoElement.videoWidth;
+    canvasElement.height = videoElement.videoHeight;
+
+    const context = canvasElement.getContext('2d');
+    context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+    capturedPicture.src = canvasElement.toDataURL('image/jpeg');
+
+    savePictureBtn.disabled = false;
+    isPictureTaken = true;
+	//videoElement.pause();
+    validateForm();
+});
+
+savePictureBtn.addEventListener('click', () => {
+    const pictureData = capturedPicture.src.replace(/^data:image\/[^;]+/, 'data:application/octet-stream');
+    const link = document.createElement('a');
+    link.href = pictureData;
+    link.download = 'captured_picture.jpg';
+    link.click();
+});
+
+contactForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    // Form validation
+    if (!isFormValid || !isPictureTaken) {
+        return;
+    }
+
+    const formData = new FormData(contactForm);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open(contactForm.method, contactForm.action, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            contactForm.reset();
+            successMessage.textContent = 'Contact form submitted successfully!';
+            successMessage.style.color = '#4CAF50';
+			savePicture();
+            resetFormState();
+        } else {
+            successMessage.textContent = 'Error submitting contact form.';
+            successMessage.style.color = '#ff0000';
+        }
+    };
+    xhr.onerror = function () {
+        successMessage.textContent = 'Error submitting contact form.';
+        successMessage.style.color = '#ff0000';
+    };
+    xhr.send(formData);
+});
+
+// Form validation
+const inputFields = contactForm.querySelectorAll('input');
+
+inputFields.forEach((input) => {
+    input.addEventListener('input', validateForm);
+});
+
+function validateForm() {
+    isFormValid = true;
+
+    inputFields.forEach((input) => {
+        if (!input.value.trim()) {
+            isFormValid = false;
+        }
+    });
+
+    contactForm.querySelector('input[type="submit"]').disabled = !isFormValid || !isPictureTaken;
+}
+
+function resetFormState() {
+    isFormValid = false;
+    isPictureTaken = false;
+    savePictureBtn.disabled = true;
+    capturedPicture.src = '';
+    contactForm.querySelector('input[type="submit"]').disabled = true;
+	//const videoElement = document.createElement('video');
+    //videoElement.srcObject = videoStream;
+    // videoElement.pause();
+}
+
+function savePicture() {
+    const pictureData = capturedPicture.src.replace(/^data:image\/[^;]+/, 'data:application/octet-stream');
+    const link = document.createElement('a');
+    link.href = pictureData;
+    link.download = 'captured_picture.jpg';
+    link.click();
+} 
+	</script>
+</body>
+</html>
